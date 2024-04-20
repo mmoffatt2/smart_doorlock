@@ -1,0 +1,1 @@
+{"duration": 7.390385150909424, "input_args": {"data_folder_path": "'datasets/lfw_home/lfw_funneled'", "slice_": "(slice(70, 195, None), slice(78, 172, None))", "color": "True", "resize": "0.5", "min_faces_per_person": "20"}, "time": 1713583757.0793633}
