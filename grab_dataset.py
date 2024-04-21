@@ -15,7 +15,8 @@ def load_dataset():
     n_classes = target_names.shape[0]
     print("X: ", X.shape)
     print("y: ", y.shape)
-    print("target_names: ", target_names.shape)
+    print("target_names: ", target_names)
+    # print(y)
     return X, n_features, y, target_names, n_classes
 
 load_dataset()
