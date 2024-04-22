@@ -55,6 +55,8 @@ from grab_dataset import load_dataset
     # siamese_net.compile(loss="binary_crossentropy",optimizer=optimizer,metrics=['accuracy'])
     # return siamese_net
     # We have 2 inputs, 1 for each picture
+
+
 left_input = Input((62, 47, 3))
 right_input = Input((62, 47, 3))
 output_shape = 62
@@ -110,20 +112,38 @@ left_input = []
 right_input = []
 targets = []
 
-#Number of pairs per image
-pairs = 5
-#Let's create the new dataset to train on
+# Number of pairs per image
+pairs = 6
+# Let's create the new dataset to train on
 for i in range(len(label_list)):
-    for _ in range(pairs):
+    # for _ in range(pairs):
+    #     compare_to = i
+    #     while compare_to == i: # Make sure it's not comparing to itself
+    #         compare_to = random.randint(0, X_train.shape[0] - 1)
+    #     left_input.append(image_list[i])
+    #     right_input.append(image_list[compare_to])
+    #     if label_list[i] == label_list[compare_to]:# They are the same
+    #         targets.append(1.)
+    #     else:# Not the same
+    #         targets.append(0.)
+    # Half of the pairs should be the same person
+    for _ in range(pairs//2):
         compare_to = i
-        while compare_to == i: #Make sure it's not comparing to itself
+        # Make sure it's not comparing to itself and these are the same person
+        while compare_to == i or label_list[i] != label_list[compare_to]:
             compare_to = random.randint(0, X_train.shape[0] - 1)
         left_input.append(image_list[i])
         right_input.append(image_list[compare_to])
-        if label_list[i] == label_list[compare_to]:# They are the same
-            targets.append(1.)
-        else:# Not the same
-            targets.append(0.)
+        targets.append(1.)
+    # Half of the pairs should be different people
+    for _ in range(pairs//2):
+        compare_to = i
+        # Make sure it's not comparing to itself and these are diff ppl
+        while compare_to == i or label_list[i] == label_list[compare_to]:
+            compare_to = random.randint(0, X_train.shape[0] - 1)
+        left_input.append(image_list[i])
+        right_input.append(image_list[compare_to])
+        targets.append(0.)
             
 left_input = np.squeeze(np.array(left_input))
 # left_input = np.array(left_input)
@@ -135,6 +155,7 @@ targets = np.squeeze(np.array(targets))
 print("left_input: ", left_input.shape)
 print("right_input: ", right_input.shape)
 print("target: ", targets.shape)
+print("PERCENTAGE OF ONES IN targets", np.count_nonzero(targets)/targets.shape[0])
 
 # Test code
 test_image_list = np.split(X_test, X_test.shape[0])
@@ -144,18 +165,36 @@ test_left = []
 test_right = []
 test_targets = []
 
-#Let's create the new dataset to test on
+# Let's create the new dataset to test on
 for i in range(len(test_label_list)):
-    for _ in range(pairs):
+    # for _ in range(pairs):
+    #     compare_to = i
+    #     while compare_to == i: # Make sure it's not comparing to itself
+    #         compare_to = random.randint(0, X_test.shape[0] - 1)
+    #     test_left.append(test_image_list[i])
+    #     test_right.append(test_image_list[compare_to])
+    #     if test_label_list[i] == test_label_list[compare_to]:# They are the same
+    #         test_targets.append(1.)
+    #     else:# Not the same
+    #         test_targets.append(0.)
+    # Half of the pairs should be the same person
+    for _ in range(pairs//2):
         compare_to = i
-        while compare_to == i: #Make sure it's not comparing to itself
+        # Make sure it's not comparing to itself and these are the same person
+        while compare_to == i or test_label_list[i] != test_label_list[compare_to]:
             compare_to = random.randint(0, X_test.shape[0] - 1)
         test_left.append(test_image_list[i])
         test_right.append(test_image_list[compare_to])
-        if test_label_list[i] == test_label_list[compare_to]:# They are the same
-            test_targets.append(1.)
-        else:# Not the same
-            test_targets.append(0.)
+        test_targets.append(1.)
+    # Half of the pairs should be different people
+    for _ in range(pairs//2):
+        compare_to = i
+        # Make sure it's not comparing to itself and these are diff ppl
+        while compare_to == i or test_label_list[i] == test_label_list[compare_to]:
+            compare_to = random.randint(0, X_test.shape[0] - 1)
+        test_left.append(test_image_list[i])
+        test_right.append(test_image_list[compare_to])
+        test_targets.append(0.)
 
 print("test_left: ", np.array(test_left).shape)
 test_left = np.squeeze(np.array(test_left))
@@ -177,18 +216,30 @@ siamese_net.fit([left_input,right_input], targets,
           verbose=1,
           validation_data=([test_left,test_right],test_targets))
 
+# Choose a pair of images from test set and visualize model performance
 print("Let's see how our model does on an arbitrary pair of test images")
+fig = plt.figure(figsize=(10, 7))
+rows = 1
+cols = 2
+fig.add_subplot(rows, cols, 1)
 plt.imshow(test_left[10])
-plt.show()
+plt.axis('off')
+plt.title("left image")
+fig.add_subplot(rows, cols, 2)
 plt.imshow(test_right[10])
+plt.axis('off')
+plt.title("right image")
 plt.show()
 
 print(test_targets)
 print("label: ", test_targets[10])
-predicted_label = siamese_net.predict([test_left,test_right])
-print("predicted label: ", predicted_label[10])
+predicted_label = np.round((siamese_net.predict([test_left,test_right]))[10])
+print("predicted label: ", predicted_label)
 
 if test_targets[10] == predicted_label:
     print("YAYYYYYYY :))))) WOOOHOOOOO")
 else:
     print("FAIL >:(((")
+
+# Save the model
+siamese_net.save('siamese_model.keras')
