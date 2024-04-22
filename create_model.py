@@ -106,7 +106,7 @@ convnet = Sequential([
     Flatten(),
     Dense(50),
     BatchNormalization(),
-    Dropout(0.5),
+    Dropout(0.3),
     Activation('relu'),
     Dense(output_shape),
     Activation('sigmoid')
@@ -268,7 +268,7 @@ print("test_targets ", test_targets.shape)
 siamese_net.summary()
 siamese_net.fit([left_input,right_input], targets,
           batch_size=16,
-          epochs=15,
+          epochs=30,
           verbose=1,
           validation_data=([test_left,test_right],test_targets))
 
