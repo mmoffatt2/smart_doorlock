@@ -62,45 +62,49 @@ right_input = Input((62, 47, 3))
 output_shape = 62
 
 # We will use 2 instances of 1 network for this task
-# convnet = Sequential([
-#     Conv2D(5,3, input_shape=(62, 47, 3)),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(5,3),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(7,2),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(7,2),
-#     Activation('relu'),
-#     Flatten(),
-#     Dense(output_shape),
-#     Activation('sigmoid')
-# ])
 convnet = Sequential([
-    Conv2D(64, 3, input_shape=(62, 47, 3)),
-    Activation('relu'),
-    Conv2D(64, 3),
+    Conv2D(20,3, input_shape=(62, 47, 3)),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(128, 3),
-    Activation('relu'),
-    Conv2D(128, 3),
+    Conv2D(20,3),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(256, 2),
+    Conv2D(20,2),
     Activation('relu'),
-    Conv2D(256, 2),
+    Conv2D(20,2),
     Activation('relu'),
-    Conv2D(256, 2),
+    MaxPooling2D(),
+    Conv2D(20,2),
     Activation('relu'),
     MaxPooling2D(),
     Flatten(),
-    Dense(4096),
+    Dense(16),
     Dense(output_shape),
     Activation('sigmoid')
 ])
+# convnet = Sequential([
+#     Conv2D(64, 3, input_shape=(62, 47, 3)),
+#     Activation('relu'),
+#     Conv2D(64, 3),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(128, 3),
+#     Activation('relu'),
+#     Conv2D(128, 3),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(256, 2),
+#     Activation('relu'),
+#     Conv2D(256, 2),
+#     Activation('relu'),
+#     Conv2D(256, 2),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Flatten(),
+#     Dense(4096),
+#     Dense(output_shape),
+#     Activation('sigmoid')
+# ])
 # Connect each 'leg' of the network to each input
 # Remember, they have the same weights
 encoded_l = convnet(left_input)
@@ -150,7 +154,7 @@ for i in range(len(label_list)):
     #     else:# Not the same
     #         targets.append(0.)
     # Half of the pairs should be the same person
-    for _ in range(pairs//2):
+    for _ in range(pairs):
         compare_to = i
         # Make sure it's not comparing to itself and these are the same person
         while compare_to == i or label_list[i] != label_list[compare_to]:
@@ -159,7 +163,7 @@ for i in range(len(label_list)):
         right_input.append(image_list[compare_to])
         targets.append(1.)
     # Half of the pairs should be different people
-    for _ in range(pairs//2):
+    for _ in range(pairs):
         compare_to = i
         # Make sure it's not comparing to itself and these are diff ppl
         while compare_to == i or label_list[i] == label_list[compare_to]:
@@ -201,7 +205,7 @@ for i in range(len(test_label_list)):
     #     else:# Not the same
     #         test_targets.append(0.)
     # Half of the pairs should be the same person
-    for _ in range(pairs//2):
+    for _ in range(pairs):
         compare_to = i
         # Make sure it's not comparing to itself and these are the same person
         while compare_to == i or test_label_list[i] != test_label_list[compare_to]:
@@ -210,7 +214,7 @@ for i in range(len(test_label_list)):
         test_right.append(test_image_list[compare_to])
         test_targets.append(1.)
     # Half of the pairs should be different people
-    for _ in range(pairs//2):
+    for _ in range(pairs):
         compare_to = i
         # Make sure it's not comparing to itself and these are diff ppl
         while compare_to == i or test_label_list[i] == test_label_list[compare_to]:
@@ -235,31 +239,31 @@ print("test_targets ", test_targets.shape)
 siamese_net.summary()
 siamese_net.fit([left_input,right_input], targets,
           batch_size=16,
-          epochs=30,
+          epochs=15,
           verbose=1,
           validation_data=([test_left,test_right],test_targets))
 
 # Choose a pair of images from test set and visualize model performance
-print("Let's see how our model does on an arbitrary pair of test images")
+print("Let's see how our model does on our favorite pair of test images")
 fig = plt.figure(figsize=(10, 7))
 rows = 1
 cols = 2
 fig.add_subplot(rows, cols, 1)
-plt.imshow(test_left[10])
+plt.imshow(test_left[13])
 plt.axis('off')
 plt.title("left image")
 fig.add_subplot(rows, cols, 2)
-plt.imshow(test_right[10])
+plt.imshow(test_right[13])
 plt.axis('off')
 plt.title("right image")
 plt.show()
 
 print(test_targets)
-print("label: ", test_targets[10])
-predicted_label = np.round((siamese_net.predict([test_left,test_right]))[10])
+print("label: ", test_targets[13])
+predicted_label = np.round((siamese_net.predict([test_left,test_right]))[13])
 print("predicted label: ", predicted_label)
 
-if test_targets[10] == predicted_label:
+if test_targets[13] == predicted_label:
     print("YAYYYYYYY :))))) WOOOHOOOOO")
 else:
     print("FAIL >:(((")
