@@ -62,19 +62,42 @@ right_input = Input((62, 47, 3))
 output_shape = 62
 
 # We will use 2 instances of 1 network for this task
+# convnet = Sequential([
+#     Conv2D(5,3, input_shape=(62, 47, 3)),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(5,3),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(7,2),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(7,2),
+#     Activation('relu'),
+#     Flatten(),
+#     Dense(output_shape),
+#     Activation('sigmoid')
+# ])
 convnet = Sequential([
-    Conv2D(5,3, input_shape=(62, 47, 3)),
+    Conv2D(64, 3, input_shape=(62, 47, 3)),
+    Activation('relu'),
+    Conv2D(64, 3),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(5,3),
+    Conv2D(128, 3),
+    Activation('relu'),
+    Conv2D(128, 3),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(7,2),
+    Conv2D(256, 2),
+    Activation('relu'),
+    Conv2D(256, 2),
+    Activation('relu'),
+    Conv2D(256, 2),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(7,2),
-    Activation('relu'),
     Flatten(),
+    Dense(4096),
     Dense(output_shape),
     Activation('sigmoid')
 ])
