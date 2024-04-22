@@ -1,4 +1,4 @@
-from keras.layers import Input, Conv2D, Lambda, Dense, Flatten,MaxPooling2D,Activation, Dropout
+from keras.layers import Input, Conv2D, Lambda, Dense, Flatten,MaxPooling2D,Activation, Dropout, BatchNormalization
 from keras.models import Model, Sequential
 from keras.regularizers import l2
 import tensorflow as tf
@@ -62,23 +62,52 @@ right_input = Input((62, 47, 3))
 output_shape = 62
 
 # We will use 2 instances of 1 network for this task
+# convnet = Sequential([
+#     Conv2D(50,5, input_shape=(62, 47, 3)),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(30,3),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(20,2),
+#     Activation('relu'),
+#     Conv2D(20,2),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Conv2D(20,2),
+#     Activation('relu'),
+#     MaxPooling2D(),
+#     Flatten(),
+#     Dense(150),
+#     BatchNormalization(),
+#     Dropout(0.5),
+#     Activation('relu'),
+#     Dense(100),
+#     BatchNormalization(),
+#     Dropout(0.4),
+#     Activation('relu'),
+#     Dense(output_shape),
+#     Activation('sigmoid')
+# ])
 convnet = Sequential([
-    Conv2D(20,3, input_shape=(62, 47, 3)),
+    Conv2D(30,3, input_shape=(62, 47, 3)),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(20,3),
+    Conv2D(30,3),
     Activation('relu'),
     MaxPooling2D(),
-    Conv2D(20,2),
+    Conv2D(40,2),
     Activation('relu'),
-    Conv2D(20,2),
+    Conv2D(40,2),
     Activation('relu'),
-    MaxPooling2D(),
-    Conv2D(20,2),
+    Conv2D(40,2),
     Activation('relu'),
     MaxPooling2D(),
     Flatten(),
-    Dense(16),
+    Dense(50),
+    BatchNormalization(),
+    Dropout(0.5),
+    Activation('relu'),
     Dense(output_shape),
     Activation('sigmoid')
 ])
