@@ -90,10 +90,10 @@ output_shape = 62
 #     Activation('sigmoid')
 # ])
 convnet = Sequential([
-    Conv2D(30,3, input_shape=(62, 47, 3)),
+    Conv2D(30,5, input_shape=(62, 47, 3), padding="same"),
     Activation('relu'),
-    MaxPooling2D(),
-    Conv2D(30,3),
+    MaxPooling2D(padding="same"),
+    Conv2D(30,3, padding="same"),
     Activation('relu'),
     MaxPooling2D(),
     Conv2D(40,2),
