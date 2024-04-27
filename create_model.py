@@ -1,4 +1,4 @@
-from keras.layers import Input, Conv2D, Lambda, Dense, Flatten,MaxPooling2D,Activation, Dropout, BatchNormalization
+from keras.layers import Input, Conv2D, Lambda, Dense, Flatten,MaxPooling2D,Activation, Dropout, BatchNormalization, Layer
 from keras.models import Model, Sequential
 from keras.regularizers import l2
 import tensorflow as tf
@@ -10,6 +10,22 @@ import pandas as pd
 import random
 from sklearn.model_selection import train_test_split
 from grab_dataset import load_dataset
+
+class L1(Layer):
+    # def __init__(self, units=32, input_dim=32):
+    #     super().__init__()
+    #     self.w = self.add_weight(
+    #         shape=(input_dim, units),
+    #         initializer="random_normal",
+    #         trainable=True,
+    #     )
+    #     self.b = self.add_weight(shape=(units,), initializer="zeros", trainable=True)
+
+    def call(self, inputs):
+        return tf.math.abs(inputs[0] - inputs[1])
+
+# def custom_layer(t):
+#     return tf.math.abs(t[0] - t[1])
 
 # def createSiameseNetwork():
     # # We have 2 inputs, 1 for each picture
@@ -61,79 +77,38 @@ left_input = Input((62, 47, 3))
 right_input = Input((62, 47, 3))
 output_shape = 62
 
-# We will use 2 instances of 1 network for this task
-# convnet = Sequential([
-#     Conv2D(50,5, input_shape=(62, 47, 3)),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(30,3),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(20,2),
-#     Activation('relu'),
-#     Conv2D(20,2),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(20,2),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Flatten(),
-#     Dense(150),
-#     BatchNormalization(),
-#     Dropout(0.5),
-#     Activation('relu'),
-#     Dense(100),
-#     BatchNormalization(),
-#     Dropout(0.4),
-#     Activation('relu'),
-#     Dense(output_shape),
-#     Activation('sigmoid')
-# ])
 convnet = Sequential([
-    Conv2D(30,5, input_shape=(62, 47, 3), padding="same"),
-    Activation('relu'),
-    MaxPooling2D(padding="same"),
-    Conv2D(30,3, padding="same"),
-    Activation('relu'),
-    MaxPooling2D(),
-    Conv2D(40,2),
-    Activation('relu'),
-    Conv2D(40,2),
-    Activation('relu'),
-    Conv2D(40,2),
+    Conv2D(30,5, input_shape=(62, 47, 3)),
     Activation('relu'),
     MaxPooling2D(),
     Flatten(),
-    Dense(50),
-    BatchNormalization(),
-    Dropout(0.3),
-    Activation('relu'),
     Dense(output_shape),
     Activation('sigmoid')
 ])
+
 # convnet = Sequential([
-#     Conv2D(64, 3, input_shape=(62, 47, 3)),
+#     Conv2D(30,5, input_shape=(62, 47, 3), padding="same"),
 #     Activation('relu'),
-#     Conv2D(64, 3),
-#     Activation('relu'),
-#     MaxPooling2D(),
-#     Conv2D(128, 3),
-#     Activation('relu'),
-#     Conv2D(128, 3),
+#     MaxPooling2D(padding="same"),
+#     Conv2D(30,3, padding="same"),
 #     Activation('relu'),
 #     MaxPooling2D(),
-#     Conv2D(256, 2),
+#     Conv2D(40,2),
 #     Activation('relu'),
-#     Conv2D(256, 2),
+#     Conv2D(40,2),
 #     Activation('relu'),
-#     Conv2D(256, 2),
+#     Conv2D(40,2),
 #     Activation('relu'),
 #     MaxPooling2D(),
 #     Flatten(),
-#     Dense(4096),
+#     Dense(50),
+#     BatchNormalization(),
+#     Dropout(0.3),
+#     Activation('relu'),
 #     Dense(output_shape),
 #     Activation('sigmoid')
 # ])
+
 # Connect each 'leg' of the network to each input
 # Remember, they have the same weights
 encoded_l = convnet(left_input)
@@ -141,11 +116,15 @@ encoded_l = convnet(left_input)
 encoded_r = convnet(right_input)
 # print(encoded_l.shape)
 
+L_layer = L1()
+L1_distance = L_layer([encoded_l, encoded_r])
+
 # Getting the L1 Distance between the 2 encodings
-L1_layer = Lambda(lambda tensor:tf.math.abs(tensor[0] - tensor[1]), output_shape=(3023, output_shape))
+# L1_layer = Lambda(custom_layer, output_shape=(3023, output_shape))
+# L1_distance = L1_layer([encoded_l, encoded_r])
 
 # Add the distance function to the network
-L1_distance = L1_layer([encoded_l, encoded_r])
+# L1_distance = L1_layer([encoded_l, encoded_r])
 
 prediction = Dense(1,activation='sigmoid')(L1_distance)
 siamese_net = Model(inputs=[left_input,right_input],outputs=prediction)
@@ -268,34 +247,41 @@ print("test_targets ", test_targets.shape)
 siamese_net.summary()
 siamese_net.fit([left_input,right_input], targets,
           batch_size=16,
-          epochs=30,
+          epochs=1,
           verbose=1,
           validation_data=([test_left,test_right],test_targets))
 
-# Choose a pair of images from test set and visualize model performance
-print("Let's see how our model does on our favorite pair of test images")
-fig = plt.figure(figsize=(10, 7))
-rows = 1
-cols = 2
-fig.add_subplot(rows, cols, 1)
-plt.imshow(test_left[13])
-plt.axis('off')
-plt.title("left image")
-fig.add_subplot(rows, cols, 2)
-plt.imshow(test_right[13])
-plt.axis('off')
-plt.title("right image")
-plt.show()
+# # Choose a pair of images from test set and visualize model performance
+# print("Let's see how our model does on our favorite pair of test images")
+# fig = plt.figure(figsize=(10, 7))
+# rows = 1
+# cols = 2
+# fig.add_subplot(rows, cols, 1)
+# plt.imshow(test_left[13])
+# plt.axis('off')
+# plt.title("left image")
+# fig.add_subplot(rows, cols, 2)
+# plt.imshow(test_right[13])
+# plt.axis('off')
+# plt.title("right image")
+# plt.show()
 
-print(test_targets)
-print("label: ", test_targets[13])
-predicted_label = np.round((siamese_net.predict([test_left,test_right]))[13])
-print("predicted label: ", predicted_label)
+# print(test_targets)
+# print("label: ", test_targets[13])
+# predicted_label = np.round((siamese_net.predict([test_left,test_right]))[13])
+# print("predicted label: ", predicted_label)
 
-if test_targets[13] == predicted_label:
-    print("YAYYYYYYY :))))) WOOOHOOOOO")
-else:
-    print("FAIL >:(((")
+# if test_targets[13] == predicted_label:
+#     print("YAYYYYYYY :))))) WOOOHOOOOO")
+# else:
+#     print("FAIL >:(((")
 
 # Save the model
-siamese_net.save('siamese_model.keras')
+# siamese_net.save('siamese_model.keras')
+
+# serialize model to JSON
+model_json = siamese_net.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+siamese_net.save_weights("model.weights.h5")
