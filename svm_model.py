@@ -6,8 +6,8 @@ from scipy.stats import loguniform
 from sklearn.datasets import fetch_lfw_people
 from sklearn.decomposition import PCA
 from sklearn.metrics import ConfusionMatrixDisplay, classification_report
-from sklearn.model_selection import RandomizedSearchCV, train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split, StratifiedShuffleSplit
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
 ### LOAD DATASET:
@@ -31,7 +31,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=42
 )
 
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
@@ -42,7 +42,7 @@ print("n_classes: %d" % n_classes)
 
 ### PCA ANALYSIS:
 
-n_components = 150
+n_components = 120
 
 print(
     "Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0])
@@ -62,13 +62,27 @@ print("done in %0.3fs" % (time() - t0))
 ##TRAINING CLASSIFIER
 print("Fitting the classifier to the training set")
 t0 = time()
+# Generate random samples from the log-uniform distribution
+param_range = loguniform(1e-2, 1e5)
+num_samples = 20  # specify the number of samples you want
+samples = param_range.rvs(num_samples)
+
+
+param_range = loguniform(1e-4, 1e-1)
+num_samples = 10  # specify the number of samples you want
+samples2 = param_range.rvs(num_samples)
+
+
 param_grid = {
-    "C": loguniform(1e3, 1e5),
-    "gamma": loguniform(1e-4, 1e-1),
+    "C": samples,
+    "gamma": samples2,
+    "kernel": ['linear', 'rbf', 'poly', 'sigmoid']
 }
-clf = RandomizedSearchCV(
-    SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10
-)
+cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
+# clf = RandomizedSearchCV(
+#     SVC(kernel="rbf", class_weight="balanced"), param_grid, n_iter=10
+# )
+clf = GridSearchCV(SVC(class_weight='balanced'), param_grid, cv=cv, n_jobs=-1)
 clf = clf.fit(X_train_pca, y_train)
 print("done in %0.3fs" % (time() - t0))
 print("Best estimator found by grid search:")
