@@ -8,19 +8,20 @@ import uuid
 import time
 
 # Load model
-siamese_model = models.load_model('siamese_model.keras', custom_objects={"L1": L1})
+siamese_model = models.load_model('siamese_model81.keras', custom_objects={"L1": L1})
 
 # siamese_model.summary()
 
-def predict_image(img_path, threshold=.7):
+def predict_image(img_path, threshold=.8):
     score = 0
     img = cv2.imread(img_path)
     img = cv2.resize(img, (47, 62), interpolation=cv2.INTER_NEAREST)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # plt.imshow(img)
+    # plt.show()
     # print(img.shape)
     anchor_path = "anchors/michael"
     anchor_files = os.listdir(anchor_path)
-    threshold = len(anchor_files)*.7
     anchor_imgs = []
     for anchor in anchor_files:
         anchor_img = cv2.imread(f"{anchor_path}/{anchor}")
@@ -28,18 +29,28 @@ def predict_image(img_path, threshold=.7):
         anchor_img = cv2.cvtColor(anchor_img, cv2.COLOR_BGR2RGB)
         # print(anchor_img.shape)
         anchor_imgs.append(anchor_img)
+    # img2 = cv2.imread("datasets/lfw_home/lfw_funneled/Zahir_Shah/Zahir_Shah_0001.jpg")
+    # img2 = cv2.resize(img2, (47, 62), interpolation=cv2.INTER_NEAREST)
+    # img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+    # anchor_imgs = []
+    # anchor_imgs.append(img2)
     
     for anchor in anchor_imgs:
         # print(anchor.shape)
         # print(img.shape)
-        predicted_label = np.round(siamese_model.predict([np.array([img]), np.array([anchor])]))
+        # plt.imshow(anchor)
+        # plt.show()
+        predicted_label = np.round(siamese_model.predict([np.array([img]), np.array([anchor])])[0])
         # print(predicted_label)
-        score += predicted_label
+        score += int(predicted_label)
 
-    if score > threshold:
-        print("Test image matches anchor images. Unlocking the door! :)")
+    score = score / len(anchor_imgs)
+    if score >= threshold:
+        print(f"Test image is a {score*100}% match with resident. Unlocking the door! :)")
+        # print(f"Test image is a {score} matches anchor images. Unlocking the door! :)")
     else:
-        print("Test image doesn't match anchor images. This person doesn't belong to this house! >:(")
+        print(f"Test image is a {score*100}% match with resident. This person doesn't belong to this house! >:(")
+        # print("Test image doesn't match anchor images. This person doesn't belong to this house! >:(")
 
 # predict_image("anchors/olivia/oliv.jpg")
 
@@ -49,27 +60,31 @@ def doorlock():
     cap = cv2.VideoCapture(1)
     # cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-    next_capture_time = time.time() + 10
 
-    while cap.isOpened(): 
+    start = False
+    while cap.isOpened():
         ret, frame = cap.read()
     
         # Cut down frame to 720x529
         frame = frame[:,376:905, :]
-        
+
         # Show video
         cv2.imshow('Smart Doorlock', frame)
 
-        if time.time() >= next_capture_time:
-            # Create the unique file path 
-            imgname = os.path.join("test/olivia/", '{}.jpg'.format(uuid.uuid1()))
+        if (cv2.waitKey(1) & 0XFF == ord('s')) and not start:
+            start = True
+            next_capture_time = time.time() + 1
 
-            # Write out anchor image
-            cv2.imwrite(imgname, frame)
+        if start:
+            if time.time() >= next_capture_time:
+                # Create the unique file path 
+                imgname = os.path.join("test/", '{}.jpg'.format(uuid.uuid1()))
+                # Write out anchor image
+                cv2.imwrite(imgname, frame)
 
-            predict_image(imgname)
+                predict_image(imgname)
 
-            next_capture_time = time.time() + 10
+                next_capture_time = time.time() + 5
 
         # Breaking gracefully
         if cv2.waitKey(1) & 0XFF == ord('q'):

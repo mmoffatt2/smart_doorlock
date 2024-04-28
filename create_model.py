@@ -11,6 +11,7 @@ import pandas as pd
 import random
 from sklearn.model_selection import train_test_split
 from grab_dataset import load_dataset
+import cv2
 
 saving.get_custom_objects().clear()
 
@@ -45,7 +46,9 @@ def main():
     convnet = Sequential([
         Conv2D(30,5, input_shape=(62, 47, 3), padding="same"),
         Activation('relu'),
-        MaxPooling2D(padding="same"),
+        Conv2D(30,3, padding="same"),
+        Activation('relu'),
+        MaxPooling2D(),
         Conv2D(30,3, padding="same"),
         Activation('relu'),
         MaxPooling2D(),
@@ -59,7 +62,7 @@ def main():
         Flatten(),
         Dense(50),
         BatchNormalization(),
-        Dropout(0.3),
+        Dropout(0.5),
         Activation('relu'),
         Dense(output_shape),
         Activation('sigmoid')
@@ -202,34 +205,42 @@ def main():
     siamese_net.summary()
     siamese_net.fit([left_input,right_input], targets,
             batch_size=16,
-            epochs=1,
+            epochs=30,
             verbose=1,
             validation_data=([test_left,test_right],test_targets))
 
-    # # Choose a pair of images from test set and visualize model performance
-    # print("Let's see how our model does on our favorite pair of test images")
-    # fig = plt.figure(figsize=(10, 7))
-    # rows = 1
-    # cols = 2
-    # fig.add_subplot(rows, cols, 1)
-    # plt.imshow(test_left[13])
-    # plt.axis('off')
-    # plt.title("left image")
-    # fig.add_subplot(rows, cols, 2)
-    # plt.imshow(test_right[13])
-    # plt.axis('off')
-    # plt.title("right image")
-    # plt.show()
+    # Choose a few pairs of images from test set and visualize model performance
+    print("Let's see how our model does on our favorite pair of test images")
+    img = cv2.imread("datasets/lfw_home/lfw_funneled/Viara_Vike-Freiberga/Viara_Vike-Freiberga_0001.jpg")
+    img = cv2.resize(img, (47, 62), interpolation=cv2.INTER_NEAREST)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img2 = cv2.imread("datasets/lfw_home/lfw_funneled/Zahir_Shah/Zahir_Shah_0001.jpg")
+    img2 = cv2.resize(img2, (47, 62), interpolation=cv2.INTER_NEAREST)
+    img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+
+    fig = plt.figure(figsize=(10, 7))
+    rows = 1
+    cols = 2
+    fig.add_subplot(rows, cols, 1)
+    plt.imshow(img)
+    plt.axis('off')
+    plt.title("left image")
+    fig.add_subplot(rows, cols, 2)
+    plt.imshow(img2)
+    plt.axis('off')
+    plt.title("right image")
+    plt.show()
 
     # print(test_targets)
-    # print("label: ", test_targets[13])
-    # predicted_label = np.round((siamese_net.predict([test_left,test_right]))[13])
-    # print("predicted label: ", predicted_label)
+    # print("label: ", test_targets[i])
+    predicted_label = np.round((siamese_net.predict([np.array([img]), np.array([img2])]))[0])
+    print("predicted label: ", predicted_label)
 
-    # if test_targets[13] == predicted_label:
+    # if test_targets[i] == predicted_label:
     #     print("YAYYYYYYY :))))) WOOOHOOOOO")
     # else:
     #     print("FAIL >:(((")
+        
 
     # Save the model
     siamese_net.save('siamese_model.keras')
