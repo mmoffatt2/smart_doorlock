@@ -10,6 +10,23 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
+####helper functions
+def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
+    """Helper function to plot a gallery of portraits"""
+    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+    plt.subplots_adjust(bottom=0, left=0.01, right=0.99, top=0.90, hspace=0.35)
+    for i in range(n_row * n_col):
+        plt.subplot(n_row, n_col, i + 1)
+        plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
+        plt.title(titles[i], size=12)
+        plt.xticks(())
+        plt.yticks(())
+
+def title(y_pred, y_test, target_names, i):
+    pred_name = target_names[y_pred[i]].rsplit(" ", 1)[-1]
+    true_name = target_names[y_test[i]].rsplit(" ", 1)[-1]
+    return "predicted: %s\ntrue:      %s" % (pred_name, true_name)
+
 ### LOAD DATASET:
 
 lfw_people = fetch_lfw_people(min_faces_per_person=20, resize=0.4)
@@ -42,7 +59,7 @@ print("n_classes: %d" % n_classes)
 
 ### PCA ANALYSIS:
 
-n_components = 120
+n_components = 150
 
 print(
     "Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0])
@@ -98,6 +115,21 @@ print(classification_report(y_test, y_pred, target_names=target_names))
 ConfusionMatrixDisplay.from_estimator(
     clf, X_test_pca, y_test, display_labels=target_names, xticks_rotation="vertical"
 )
-plt.tight_layout()
+
+eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
+plot_gallery(eigenfaces, eigenface_titles, h, w)
+
+plt.show()
+
+
+prediction_titles = [
+    title(y_pred, y_test, target_names, i) for i in range(y_pred.shape[0])
+]
+
+plot_gallery(X_test, prediction_titles, h, w)
+
+eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
+plot_gallery(eigenfaces, eigenface_titles, h, w)
+
 plt.show()
 
